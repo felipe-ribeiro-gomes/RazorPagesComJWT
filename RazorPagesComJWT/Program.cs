@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using RazorPagesComJWT.Configurations;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var key = "sua-chave-secreta-muito-segura-e-complexa"; // Guarde em config segura!
+builder.Services.Configure<JWT>(builder.Configuration.GetSection("JWT"));
 
 builder.Services.AddAuthentication(options =>
 {
@@ -13,16 +14,19 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
  {
+     var _jwt = builder.Configuration.GetSection("JWT").Get<JWT>();
+
      options.TokenValidationParameters = new TokenValidationParameters
      {
          ValidateIssuer = true,
          ValidateAudience = true,
          ValidateLifetime = true,
          ValidateIssuerSigningKey = true,
-         ValidIssuer = "sua-aplicacao",
-         ValidAudience = "seus-usuarios",
-         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+         ValidIssuer = _jwt.Issuer,
+         ValidAudience = _jwt.Audience,
+         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.SigningKey))
      };
+
      // Lê token do cookie "AuthToken"
      options.Events = new JwtBearerEvents
      {
